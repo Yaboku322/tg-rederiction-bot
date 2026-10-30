@@ -1,0 +1,5 @@
+.venv/
+.env
+cfw.session
+__pycache__/
+.idea/
