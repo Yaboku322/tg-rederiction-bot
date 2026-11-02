@@ -3,13 +3,21 @@
 Бот для анонимной связи с администратором.
 Пользователь пишет боту, сообщение пересылается админу.
 Админ может ответить или отклонить запрос.
+Хранит историю сообщений.
+Выводит последние 10 сообщений по команде /history.
+Отменяет режим ответа по команде /cancel.
 
 in english:
 A bot for anonymous communication with an administrator.
 A user sends a message to the bot, and the message is forwarded to the administrator.
 The administrator can then respond or decline the request.
+Stores message history.
+Displays the last 10 messages when the /history command is used.
+Сancels response mode via the /cancel command.
+
 
 ## Technology
+- SQLite (the database)
 - Python
 - pyTelegramBotAPI
 - andro-cfw (обход блокировок)
