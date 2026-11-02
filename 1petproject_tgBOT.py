@@ -5,6 +5,8 @@ load_dotenv()
 from andro_cfw import CFWSession
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+from database import Database
+import datetime
 
 session = CFWSession.load()
 telebot.apihelper.API_URL = session.telebot_api_url()
@@ -13,6 +15,7 @@ telebot.apihelper.FILE_URL = session.telebot_file_url()
 
 TOKEN = os.getenv("TOKEN")
 bot = telebot.TeleBot(TOKEN)
+db = Database("messages.db")
 
 
 @bot.message_handler(commands=['start'])
@@ -22,6 +25,27 @@ def start(message):
 @bot.message_handler(commands=['help'])
 def help_command(message):
     bot.reply_to(message, "Мои команды:\n/start - запуск бота\n/help - эта справка")
+
+@bot.message_handler(commands=['history'])
+def history_command(message):
+    if message.from_user.id != ADMIN_ID:
+        bot.reply_to(message, "Эта команда только для владельца.")
+        return
+
+    messages = db.get_last_messages(10)
+    if not messages:
+        bot.reply_to(message, "History empty")
+        return
+
+    text = "Latest messages:\n\n"
+    for msg in messages:
+        # msg[2] - username, msg [3] - text, msg[4] - time
+        text += f"[{msg[4]}] @{msg[2]}: {msg[3]}\n"
+
+    bot.send_message(ADMIN_ID, text)
+
+
+
 
 #Cancel - сброс режима
 @bot.message_handler(commands=['cancel'])
@@ -60,14 +84,19 @@ def echo(message):
         bot.reply_to(message, "Это твое сообщение.")
         return
 
-    text_for_admin = f"by @{message.from_user.username}: {message.text}"
+    text_for_admin = f"<b>by @{message.from_user.username}:</b>\n\n {message.text}"
     markup = InlineKeyboardMarkup()
 
     btn_reply = InlineKeyboardButton(text="Ответить", callback_data=f"reply_{message.from_user.id}")
     btn_reject = InlineKeyboardButton(text="Отклонить", callback_data=f"reject_{message.from_user.id}")
     markup.add(btn_reply, btn_reject)
 
-    bot.send_message(ADMIN_ID, text_for_admin, reply_markup=markup)
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.save_message(message.from_user.id, message.from_user.username, message.text, now)
+
+
+    bot.send_message(ADMIN_ID, text_for_admin, reply_markup=markup, parse_mode='HTML')
     bot.reply_to(message, "Сообщение доставлено владельцу.")
 
 
